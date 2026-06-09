@@ -1,0 +1,29 @@
+# ============================================
+# bosszp-ai Python 依赖清单
+# 安装方法：pip install -r requirements.txt
+#
+# 建议先创建虚拟环境（避免污染全局Python）：
+#   python -m venv venv
+#   venv\Scripts\activate        # Windows
+#   或 source venv/bin/activate  # Mac/Linux
+#   pip install -r requirements.txt
+# ============================================
+
+# ----- Web 框架（提供 HTTP API 给 Java 调用）-----
+flask==3.1.1
+flask-cors==5.0.1
+
+# ----- 数据处理 -----
+pandas==2.2.3
+numpy==2.2.5
+
+# ----- 中文NLP（技能关键词提取）-----
+jieba==0.42.1
+scikit-learn>=1.7
+
+# ----- 数据库（Python直连MySQL，可选）-----
+pymysql==1.1.1
+sqlalchemy==2.0.40
+
+# ----- 工具 -----
+requests==2.32.5

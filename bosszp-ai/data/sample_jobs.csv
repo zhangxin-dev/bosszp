@@ -1,0 +1,11 @@
+job_title,company,city,salary_low,salary_high,exp,education,skills
+Java开发工程师,某科技公司,北京,15,25,1-3年,本科,"Java,Spring Boot,MySQL,Redis,Linux"
+Python数据分析师,某数据公司,上海,12,20,应届生,本科,"Python,Pandas,NumPy,SQL,Excel"
+前端开发工程师,某互联网公司,深圳,10,18,1-3年,大专,"JavaScript,Vue,React,CSS,HTML"
+算法工程师,某AI公司,杭州,20,35,3-5年,硕士,"Python,TensorFlow,PyTorch,NLP,CNN"
+Java开发实习生,某软件公司,北京,4,6,应届生,本科,"Java,MySQL,Spring,Git"
+测试工程师,某金融公司,上海,10,16,1-3年,本科,"Selenium,JMeter,Python,SQL,Linux"
+运维工程师,某云计算公司,深圳,12,22,3-5年,本科,"Linux,Docker,Kubernetes,Shell,Python"
+数据工程师,某大数据公司,杭州,18,30,3-5年,本科,"Python,Spark,Hadoop,SQL,Hive"
+Go后端开发,某电商公司,北京,18,28,1-3年,本科,"Go,MySQL,Redis,Docker,gRPC"
+iOS开发工程师,某移动互联网公司,广州,15,25,3-5年,本科,"Swift,Objective-C,iOS,Flutter,Xcode"

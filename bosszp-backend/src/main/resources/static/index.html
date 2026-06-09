@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职数洞见 - IT行业岗位画像与职业数据透视平台</title>
+    <!-- 引入 ECharts（免费的数据可视化图表库） -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        /* ===== 页面样式（深色主题，仿数据大屏） ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0f1923;
+            color: #fff;
+            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+            min-height: 100vh;
+        }
+        /* 顶部标题栏 */
+        .header {
+            text-align: center;
+            padding: 15px 0 5px;
+            background: linear-gradient(180deg, #1a2d3d 0%, #0f1923 100%);
+        }
+        .header h1 { font-size: 28px; color: #00d4ff; letter-spacing: 4px; }
+        .header p  { font-size: 13px; color: #7a8a9a; margin-top: 5px; }
+        /* 顶部数据卡片 */
+        .cards {
+            display: flex; justify-content: center; gap: 20px;
+            padding: 10px 20px; flex-wrap: wrap;
+        }
+        .card {
+            background: linear-gradient(135deg, #1a3a4a 0%, #15262e 100%);
+            border: 1px solid #2a4a5a; border-radius: 8px;
+            padding: 20px 30px; text-align: center; min-width: 140px;
+        }
+        .card .num { font-size: 32px; font-weight: bold; color: #00d4ff; }
+        .card .label { font-size: 13px; color: #7a8a9a; margin-top: 5px; }
+        /* 图表容器 */
+        .chart-container {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            padding: 10px 20px; gap: 15px;
+        }
+        .chart-box {
+            background: linear-gradient(135deg, #1a3a4a20 0%, #15262e40 100%);
+            border: 1px solid #2a4a5a; border-radius: 8px;
+            width: 48%; min-width: 450px; height: 350px;
+            position: relative;
+        }
+        .chart-box.full { width: 97%; }
+        .chart-box .title {
+            font-size: 14px; color: #00d4ff; padding: 10px 15px;
+            border-bottom: 1px solid #2a4a5a;
+        }
+        .chart-box .chart { width: 100%; height: 300px; }
+        /* 底部 */
+        .footer {
+            text-align: center; padding: 15px;
+            color: #4a5a6a; font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部 -->
+    <div class="header">
+        <h1>📊 职数洞见 — IT行业岗位画像与职业数据透视平台</h1>
+        <p>数据来源：BOSS直聘 / 拉勾网  |  分析引擎：Python (jieba + TF-IDF)  |  后端：Java Spring Boot  |  数据更新时间：实时</p>
+    </div>
+
+    <!-- 数据概览卡片 -->
+    <div class="cards" id="cards">
+        <div class="card"><div class="num" id="totalJobs">--</div><div class="label">岗位总数</div></div>
+        <div class="card"><div class="num" id="avgSalary">--</div><div class="label">平均薪资(K/月)</div></div>
+        <div class="card"><div class="num" id="cityCount">--</div><div class="label">覆盖城市</div></div>
+        <div class="card"><div class="num" id="topSkill">--</div><div class="label">最热门技能</div></div>
+    </div>
+
+    <!-- 图表区 -->
+    <div class="chart-container">
+        <!-- 薪资分布柱状图 -->
+        <div class="chart-box">
+            <div class="title">💰 薪资分布</div>
+            <div class="chart" id="salaryChart"></div>
+        </div>
+        <!-- 城市岗位分布 -->
+        <div class="chart-box">
+            <div class="title">🏙️ 城市岗位数量</div>
+            <div class="chart" id="cityChart"></div>
+        </div>
+        <!-- 技能词云 -->
+        <div class="chart-box">
+            <div class="title">🔑 热门技能词云</div>
+            <div class="chart" id="skillCloud"></div>
+        </div>
+        <!-- 经验要求饼图 -->
+        <div class="chart-box">
+            <div class="title">📋 经验要求分布</div>
+            <div class="chart" id="expChart"></div>
+        </div>
+    </div>
+
+    <div class="footer">职数洞见 © 2026 | 哈尔滨华德学院 数据科学与信息工程学院</div>
+
+    <!-- ===== ECharts 图表脚本 ===== -->
+    <script>
+    // 当页面加载完成后执行
+    window.onload = function() {
+        loadOverview();      // 加载顶部卡片数据
+        loadAiAnalysis();    // 调用 Python AI 引擎加载图表数据
+    };
+
+    // ========== 1. 加载概览数据（来自 Java 后端）==========
+    function loadOverview() {
+        fetch('/api/jobs/overview')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('totalJobs').innerText = data.totalJobs || '--';
+            })
+            .catch(err => console.warn('概览数据加载中...', err));
+    }
+
+    // ========== 2. 加载 AI 分析数据（来自 Python Flask）==========
+    function loadAiAnalysis() {
+        fetch('/api/ai/analysis')          // 调用 Java 接口，Java 再调 Python
+            .then(res => res.json())
+            .then(result => {
+                if (!result.data) {
+                    showEmptyHint('暂无数据，请先运行数据采集');
+                    return;
+                }
+                let d = result.data;
+
+                // 更新概览卡片
+                document.getElementById('totalJobs').innerText = d.data_overview?.total_jobs || '--';
+                document.getElementById('cityCount').innerText = d.data_overview?.cities || '--';
+
+                // 薪资统计
+                if (d.salary_analysis) {
+                    let s = d.salary_analysis;
+                    document.getElementById('avgSalary').innerText =
+                        s.avg_salary_mid ? s.avg_salary_mid.toFixed(1) : '--';
+                    drawSalaryChart(s.salary_distribution);
+                }
+
+                // 技能分析
+                if (d.skill_analysis?.top_skills?.length > 0) {
+                    document.getElementById('topSkill').innerText =
+                        d.skill_analysis.top_skills[0].name;
+                    drawSkillCloud(d.skill_analysis.top_skills);
+                } else {
+                    document.getElementById('topSkill').innerText = '--';
+                }
+
+                // 城市分析
+                if (d.city_analysis?.city_stats?.length > 0) {
+                    drawCityChart(d.city_analysis.city_stats);
+                }
+
+                // 经验分析
+                if (d.exp_analysis?.exp_stats?.length > 0) {
+                    drawExpChart(d.exp_analysis.exp_stats);
+                }
+            })
+            .catch(err => {
+                console.error('AI分析加载失败:', err);
+                showEmptyHint('Python AI引擎未启动，请在 bosszp-ai 目录下运行 python app.py');
+            });
+    }
+
+    // ========== 3. 各图表绘制函数 ==========
+
+    // 薪资分布柱状图
+    function drawSalaryChart(data) {
+        if (!data || data.length === 0) return;
+        let chart = echarts.init(document.getElementById('salaryChart'));
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 50, right: 20, top: 20, bottom: 30 },
+            xAxis: { type: 'category', data: data.map(d => d.range),
+                      axisLabel: { color: '#7a8a9a', fontSize: 11 } },
+            yAxis: { type: 'value', name: '岗位数',
+                      axisLabel: { color: '#7a8a9a' } },
+            series: [{
+                type: 'bar', data: data.map(d => d.count),
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#00d4ff' }, { offset: 1, color: '#006080' }
+                ])},
+                barWidth: '60%'
+            }]
+        });
+        window.addEventListener('resize', () => chart.resize());
+    }
+
+    // 城市岗位柱状图
+    function drawCityChart(data) {
+        if (!data || data.length === 0) return;
+        let chart = echarts.init(document.getElementById('cityChart'));
+        let top10 = data.slice(0, 10);
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 60, right: 20, top: 20, bottom: 30 },
+            xAxis: { type: 'category', data: top10.map(d => d.city),
+                      axisLabel: { color: '#7a8a9a', fontSize: 11 } },
+            yAxis: { type: 'value', name: '岗位数',
+                      axisLabel: { color: '#7a8a9a' } },
+            series: [{
+                type: 'bar', data: top10.map(d => d.job_count),
+                itemStyle: { color: '#52a87a' },
+                barWidth: '50%'
+            }]
+        });
+        window.addEventListener('resize', () => chart.resize());
+    }
+
+    // 技能词云（用柱状图模拟词云效果）
+    function drawSkillCloud(data) {
+        if (!data || data.length === 0) return;
+        let chart = echarts.init(document.getElementById('skillCloud'));
+        let top15 = data.slice(0, 15);
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 90, right: 20, top: 10, bottom: 20 },
+            yAxis: { type: 'category', data: top15.map(d => d.name).reverse(),
+                      axisLabel: { color: '#7a8a9a', fontSize: 12 },
+                      axisLine: { show: false }, axisTick: { show: false } },
+            xAxis: { type: 'value', show: false },
+            series: [{
+                type: 'bar', data: top15.map(d => d.count).reverse(),
+                barWidth: '60%',
+                itemStyle: {
+                    color: function(p) {
+                        let colors = ['#00d4ff','#ff6b6b','#51cf66','#ffd43b',
+                                      '#cc5de8','#22b8cf','#f06595','#74c0fc',
+                                      '#ff922b','#20c997','#845ef7','#fab005'];
+                        return colors[p.dataIndex % colors.length];
+                    }
+                },
+                label: { show: true, position: 'right', color: '#7a8a9a' }
+            }]
+        });
+        window.addEventListener('resize', () => chart.resize());
+    }
+
+    // 经验要求饼图
+    function drawExpChart(data) {
+        if (!data || data.length === 0) return;
+        let chart = echarts.init(document.getElementById('expChart'));
+        chart.setOption({
+            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+            legend: { orient: 'vertical', right: 10, top: 'center',
+                       textStyle: { color: '#7a8a9a', fontSize: 12 } },
+            series: [{
+                type: 'pie', radius: ['40%', '70%'], center: ['40%', '50%'],
+                data: data.map(d => ({ name: d.exp, value: d.count })),
+                emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } },
+                label: { color: '#7a8a9a' }
+            }]
+        });
+        window.addEventListener('resize', () => chart.resize());
+    }
+
+    // 空数据提示
+    function showEmptyHint(msg) {
+        document.getElementById('totalJobs').innerText = '0';
+        document.getElementById('avgSalary').innerText = '--';
+        document.getElementById('cityCount').innerText = '0';
+        document.getElementById('topSkill').innerText = '--';
+        console.warn('💡 ' + msg);
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+# ============================================
+# bosszp-backend Spring Boot 配置文件
+# 作用：配置数据库连接、服务器端口、Python AI 服务地址等
+#
+# 你需要修改的地方：
+#   1. spring.datasource.password → 改为你的 MySQL 密码
+#   2. bosszp.ai.url → 如果 Flask 不在本机，改 IP 地址
+# ============================================
+
+# ----- 服务器配置 -----
+server:
+  port: 8080    # Spring Boot 默认端口
+
+# ----- 数据源配置 -----
+spring:
+  datasource:
+    # JDBC 连接 URL（bosszp 是数据库名，和 sql/init.sql 里创建的一致）
+    url: jdbc:mysql://localhost:3306/bosszp?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8
+    username: root                 # ⚠️ 改成你的 MySQL 用户名
+    password: 123456               # ⚠️ 改成你的 MySQL 密码
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ----- 静态资源配置 -----
+  # index.html 放在 static 目录下，可以直接访问 http://localhost:8080/
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+# ----- MyBatis-Plus 配置 -----
+mybatis-plus:
+  # 打印 SQL 日志（开发时打开，方便调试）
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  # 全局表前缀：t_job → 实体类 Job 自动映射
+  global-config:
+    db-config:
+      table-prefix: t_
+
+# ----- bosszp 自定义配置 -----
+bosszp:
+  # Python Flask AI 服务地址（app.py 启动后的地址）
+  ai:
+    url: http://localhost:5000/api
+
+# ----- 日志级别 -----
+logging:
+  level:
+    com.bosszp: DEBUG    # 项目包下的日志输出 DEBUG 级别
+    root: INFO            # 其他框架日志输出 INFO 级别
